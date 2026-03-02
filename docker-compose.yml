@@ -1,0 +1,37 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: guardian_backend
+    ports:
+      - "8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # Permite que o container acesse o Ollama no Linux
+    environment:
+      # Diz ao Spring para bater no Ollama local da sua máquina
+      - SPRING_AI_OLLAMA_BASE_URL=http://host.docker.internal:11434
+      # Define os modelos que baixamos no Passo 1
+      - SPRING_AI_OLLAMA_CHAT_OPTIONS_MODEL=gemma2:2b
+      - SPRING_AI_OLLAMA_EMBEDDING_OPTIONS_MODEL=nomic-embed-text
+    volumes:
+      - ./local-data:/app/data
+      - ./local-output:/app/output
+    networks:
+      - poc-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: guardian_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - poc-network
+
+networks:
+  poc-network:
+    driver: bridge
